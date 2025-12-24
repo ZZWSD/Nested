@@ -10,7 +10,12 @@ public class FloorButton : MonoBehaviour
 
         foreach (ColorDoor door in targetDoors)
         {
-            door.colorLockDisabled = pressed;
+            if (door != null)
+            {
+                // 當按鈕被壓住 (pressed 為 true)，門應該「消失」(SetActive(false))
+                // 當按鈕放開 (pressed 為 false)，門應該「出現」(SetActive(true))
+                door.gameObject.SetActive(!pressed);
+            }
         }
     }
 

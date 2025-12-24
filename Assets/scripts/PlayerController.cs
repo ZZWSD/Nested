@@ -7,6 +7,12 @@ public class PlayerController : MonoBehaviour
     int currentIndex = 3;
     public DollColor currentColor;
     public int currentSize = 1;
+    public int GetCurrentSize()
+    {
+        return currentIndex + 1;
+    }
+
+
 
     // 用來記錄「被放在地上的外層娃娃」
     List<GameObject> droppedDolls = new List<GameObject>();
@@ -32,18 +38,22 @@ public class PlayerController : MonoBehaviour
     void Move(Vector3 dir)
     {
         Vector3 target = transform.position + dir;
+        target = new Vector3(Mathf.Round(target.x), transform.position.y, Mathf.Round(target.z));
 
-        target = new Vector3(
-            Mathf.Round(target.x),
-            transform.position.y,
-            Mathf.Round(target.z)
-        );
+        // 1. 檢查門的邏輯 (保留你原本的程式碼)
+        Collider[] hits = Physics.OverlapBox(target, Vector3.one * 0.4f);
+        foreach (Collider hit in hits)
+        {
+            ColorDoor door = hit.GetComponent<ColorDoor>();
+            if (door != null && !door.CanPass(GetPlayerColor())) return;
+        }
 
-        // 檢查目標格子有沒有門
-        Collider[] hits = Physics.OverlapBox(
-            target,
-            Vector3.one * 0.4f
-        );
+        // 2. 確定可以移動，更新位置
+        transform.position = target;
+
+        // 3. 新增：移動完後立刻檢查是否踩在「終點」上
+        CheckForGoal(target);
+
 
         foreach (Collider hit in hits)
         {
@@ -61,6 +71,19 @@ public class PlayerController : MonoBehaviour
         }
 
         transform.position = target;
+    }
+    void CheckForGoal(Vector3 position)
+    {
+        // 在玩家新位置進行盒狀偵測
+        Collider[] goalHits = Physics.OverlapBox(position, Vector3.one * 0.4f);
+        foreach (Collider hit in goalHits)
+        {
+            GoalCircle goal = hit.GetComponent<GoalCircle>();
+            if (goal != null)
+            {
+                goal.TryClear(this); // 呼叫終點的檢查邏輯
+            }
+        }
     }
 
     // ================= 核心修改 =================
@@ -107,6 +130,7 @@ public class PlayerController : MonoBehaviour
     }
 
 
+
     void UpdateDolls()
     {
         for (int i = 0; i < dolls.Length; i++)
@@ -122,6 +146,18 @@ public class PlayerController : MonoBehaviour
     }
 
     DoorColor GetPlayerColor()
+    {
+        // 最外層娃娃的顏色
+        GameObject outerDoll = dolls[currentIndex];
+        DollColor dollColor = outerDoll.GetComponent<DollColor>();
+
+        if (dollColor == null)
+            return DoorColor.White;
+
+        return dollColor.color;
+    }
+
+    public DoorColor DollColor()
     {
         // 最外層娃娃的顏色
         GameObject outerDoll = dolls[currentIndex];

@@ -1,23 +1,34 @@
-using UnityEngine;
-using UnityEngine.Playables;
+﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GoalCircle : MonoBehaviour
 {
-    public DollColor requiredColor;
+    public DoorColor requiredColor = DoorColor.White;
     public int requiredSize = 1;
+    public GameObject winPanel;
+    bool isCleared = false;
+    // 防止重複觸發
 
-    private void OnTriggerStay(Collider other)
+    public void TryClear(PlayerController player)
     {
-        if (!other.CompareTag("Player")) return;
+        if (isCleared) return;
 
-        PlayerController player = other.GetComponent<PlayerController>();
-        if (player == null) return;
+        DoorColor playerColor = player.DollColor();
+        int playerSize = player.GetCurrentSize();
 
-        if (player.currentColor == requiredColor &&
-            player.currentSize == requiredSize)
+        // 只要踏上來就會印這行，用來確認偵測是否成功
+        Debug.Log($"[偵測中] 玩家顏色: {playerColor}, 尺寸: {playerSize}");
+
+        if (playerColor == requiredColor && playerSize == requiredSize)
         {
-            Debug.Log("Level Clear");
-            // �o�̧A�쥻���L���N���g
+            isCleared = true;
+            Debug.Log("🎉 條件達成！通關成功！");
+
+            if (winPanel != null)
+            {
+                winPanel.SetActive(true);
+                Time.timeScale = 0f; // 停止遊戲
+            }
         }
     }
 }
